@@ -5,7 +5,7 @@ public record Permission(String name, String resource, String description) {
     public Permission {
         String originalName = name;
         String originalResource = resource;
-
+        
         if (originalName == null || originalName.trim().isEmpty()) {
             throw new IllegalArgumentException("Ошибка: name не может быть пустым");
         }
@@ -36,13 +36,13 @@ public record Permission(String name, String resource, String description) {
     public boolean matches(String namePattern, String resourcePattern) {
         boolean nameMatches;
         boolean resourceMatches;
-
+        
         if (namePattern == null) {
             nameMatches = true;
         } else {
             nameMatches = name.matches(namePattern);
         }
-
+        
         if (resourcePattern == null) {
             resourceMatches = true;
         } else {
