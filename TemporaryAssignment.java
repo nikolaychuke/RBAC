@@ -36,6 +36,10 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
         }
     }
 
+    public String getExpiresAt() {
+        return expiresAt;
+    }
+
     public String getTimeRemaining() {
         try {
             LocalDateTime now = LocalDateTime.now();
