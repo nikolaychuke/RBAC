@@ -4,8 +4,9 @@ import java.time.temporal.ChronoUnit;
 
 public class TemporaryAssignment extends AbstractRoleAssignment {
 
-    private final String expiresAt;
+    private String expiresAt;
     private final boolean autoRenew;
+    private boolean revoked;
 
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -14,11 +15,12 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
         super(user, role, metadata);
         this.expiresAt = expiresAt;
         this.autoRenew = autoRenew;
+        this.revoked = false;
     }
 
     @Override
     public boolean isActive() {
-        return !isExpired();
+        return !revoked && !isExpired();
     }
 
     @Override
@@ -62,8 +64,23 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     @Override
     public String summary() {
         String baseSummary = super.summary();
+        String status = revoked ? "ОТОЗВАНО" : (isExpired() ? "ИСТЕКЛО" : "АКТИВНО");
         String expiresInfo = "\nИстекает: " + expiresAt +
-                ", автообновление: " + (autoRenew ? "да" : "нет");
+                ", автообновление: " + (autoRenew ? "да" : "нет") +
+                ", статус: " + status;
         return baseSummary + expiresInfo;
     }
+
+    public void revoke() {
+        this.revoked = true;
+    }
+
+    public void extend(String newExpirationDate) {
+        this.expiresAt = newExpirationDate;
+    }
+
+    public boolean isRevoked() {
+        return revoked;
+    }
+
 }
