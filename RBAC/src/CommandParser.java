@@ -30,33 +30,60 @@ public class CommandParser {
     public void printHelp() {
         System.out.println("========== СПИСОК КОМАНД ==========");
         for (Map.Entry<String, String> entry : commandDescriptions.entrySet()) {
-            System.out.printf("%-20s - %s\n", entry.getKey(), entry.getValue());
+            System.out.printf("%s - %s\n", entry.getKey(), entry.getValue());
         }
-        System.out.println("====================================");
     }
 
-    public void parseAndExecute(String input, Scanner originalScanner, RBACSystem system) {
+    public void parseAndExecute(String input, Scanner scanner, RBACSystem system) {
         if (input == null || input.trim().isEmpty()) {
             return;
         }
 
-        String[] parts = input.trim().split("\\s+", 2);
-        String commandName = parts[0].toLowerCase();
-
-        Scanner commandScanner;
-
-        if (parts.length > 1) {
-            String args = parts[1];
-            String[] argArray = args.split("\\s+");
-            StringBuilder sb = new StringBuilder();
-            for (String arg : argArray) {
-                sb.append(arg).append("\n");
-            }
-            commandScanner = new Scanner(new java.io.ByteArrayInputStream(sb.toString().getBytes()));
-        } else {
-            commandScanner = originalScanner;
+        String[] parts = input.trim().split("\\s+");
+        if (parts.length == 0) {
+            return;
         }
 
-        executeCommand(commandName, commandScanner, system);
+        String commandName = parts[0].toLowerCase();
+        String[] args = new String[parts.length - 1];
+        if (parts.length > 1) {
+            System.arraycopy(parts, 1, args, 0, parts.length - 1);
+        }
+
+        Command command = commands.get(commandName);
+        if (command != null) {
+            currentArgs = args;
+            command.execute(scanner, system);
+            currentArgs = null;
+        } else {
+            System.out.println("Неизвестная команда: " + commandName);
+            System.out.println("Введите 'help' для списка команд");
+        }
+    }
+
+    private String[] currentArgs;
+
+    public String[] getCurrentArgs() {
+        return currentArgs;
+    }
+
+    public String getArgValue(String paramName) {
+        if (currentArgs == null) return null;
+        for (int i = 0; i < currentArgs.length - 1; i++) {
+            if (currentArgs[i].equalsIgnoreCase(paramName)) {
+                return currentArgs[i + 1];
+            }
+        }
+        return null;
+    }
+
+    public boolean hasArg(String paramName) {
+        if (currentArgs == null) return false;
+        for (String arg : currentArgs) {
+            if (arg.equalsIgnoreCase(paramName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
