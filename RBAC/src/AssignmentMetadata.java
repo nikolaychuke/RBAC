@@ -19,21 +19,4 @@ public record AssignmentMetadata(String assignedBy, String assignedAt, String re
         }
     }
 
-    public static void main(String[] args) {
-        System.out.println("Тестрирование метаданных");
-
-        System.out.println("\n1. Создание через конструктор:");
-        AssignmentMetadata meta1 = new AssignmentMetadata(
-                "admin", "2026-03-01 10:30", "Повышение"
-        );
-        System.out.println(meta1.format());
-
-        System.out.println("\n2. Создание с текущей датой (now):");
-        AssignmentMetadata meta2 = AssignmentMetadata.now("manager", "Назначение прав");
-        System.out.println(meta2.format());
-
-        System.out.println("\n3. Создание без причины (null):");
-        AssignmentMetadata meta3 = AssignmentMetadata.now("system", null);
-        System.out.println(meta3.format());
-    }
 }

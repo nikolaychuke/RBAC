@@ -13,11 +13,16 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
 
     public TemporaryAssignment(User user, Role role, AssignmentMetadata metadata, String expiresAt, boolean autoRenew) {
         super(user, role, metadata);
+
+        ValidationUtils.requireNonEmpty(expiresAt, "expiresAt");
+        if (!ValidationUtils.isValidDate(expiresAt)) {
+            throw new IllegalArgumentException("Ошибка: Неверный формат даты. Ожидается yyyy-MM-dd HH:mm");
+        }
+
         this.expiresAt = expiresAt;
         this.autoRenew = autoRenew;
         this.revoked = false;
     }
-
     @Override
     public boolean isActive() {
         return !revoked && !isExpired();
@@ -76,6 +81,11 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     }
 
     public void extend(String newExpirationDate) {
+        ValidationUtils.requireNonEmpty(newExpirationDate, "newExpirationDate");
+        if (!ValidationUtils.isValidDate(newExpirationDate)) {
+            throw new IllegalArgumentException("Ошибка: Неверный формат даты. Ожидается yyyy-MM-dd HH:mm");
+        }
+
         this.expiresAt = newExpirationDate;
     }
 
