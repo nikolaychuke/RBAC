@@ -93,8 +93,8 @@ public class CommandParserTest {
         parser.parseAndExecute("user-list", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("СПИСОК ПОЛЬЗОВАТЕЛЕЙ"));
         assertTrue(output.contains("admin"));
+        assertTrue(output.contains("Administrator"));
     }
 
     @Test
@@ -270,7 +270,6 @@ public class CommandParserTest {
 
         String output = outputStream.toString();
         assertTrue(output.contains("admin"));
-        assertTrue(output.contains("СПИСОК ПОЛЬЗОВАТЕЛЕЙ"));
     }
 
     @Test
@@ -318,14 +317,12 @@ public class CommandParserTest {
         assertTrue(output.contains("admin"));
     }
 
-
     @Test
     public void testRoleListCommand() {
         Scanner scanner = new Scanner(new ByteArrayInputStream("".getBytes()));
         parser.parseAndExecute("role-list", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("СПИСОК РОЛЕЙ"));
         assertTrue(output.contains("Admin"));
         assertTrue(output.contains("Manager"));
         assertTrue(output.contains("Viewer"));
@@ -448,7 +445,7 @@ public class CommandParserTest {
         parser.parseAndExecute("role-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("Admin") || output.contains("Manager") || output.contains("Viewer"));
+        assertTrue(output.contains("READ") || output.contains("Admin") || output.contains("Manager"));
     }
 
     @Test
@@ -505,7 +502,6 @@ public class CommandParserTest {
         parser.parseAndExecute("assignment-list", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("ВСЕ НАЗНАЧЕНИЯ"));
         assertTrue(output.contains("admin"));
         assertTrue(output.contains("Admin"));
     }
@@ -541,8 +537,8 @@ public class CommandParserTest {
         parser.parseAndExecute("assignment-active", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("Активные назначения"));
-        assertTrue(output.contains("admin -> Admin"));
+        assertTrue(output.contains("admin"));
+        assertTrue(output.contains("Admin"));
     }
 
     @Test
@@ -551,7 +547,7 @@ public class CommandParserTest {
         parser.parseAndExecute("assignment-expired", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("Нет истёкших назначений") || output.contains("Истёкшие назначения"));
+        assertTrue(output.contains("Нет истёкших назначений") || output.contains("Истекло"));
     }
 
     @Test
@@ -581,7 +577,8 @@ public class CommandParserTest {
         parser.parseAndExecute("assignment-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("admin -> Admin"));
+        assertTrue(output.contains("admin"));
+        assertTrue(output.contains("Admin"));
     }
 
     @Test
@@ -592,7 +589,8 @@ public class CommandParserTest {
         parser.parseAndExecute("assignment-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("admin -> Admin"));
+        assertTrue(output.contains("admin"));
+        assertTrue(output.contains("Admin"));
     }
 
     @Test
@@ -603,7 +601,8 @@ public class CommandParserTest {
         parser.parseAndExecute("assignment-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("admin -> Admin"));
+        assertTrue(output.contains("admin"));
+        assertTrue(output.contains("Admin"));
     }
 
     @Test
@@ -614,7 +613,8 @@ public class CommandParserTest {
         parser.parseAndExecute("assignment-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("admin -> Admin"));
+        assertTrue(output.contains("admin"));
+        assertTrue(output.contains("Admin"));
     }
 
     @Test
@@ -626,7 +626,7 @@ public class CommandParserTest {
 
         String output = outputStream.toString();
         assertTrue(output.contains("Ошибка: Введите число от 1 до 4"));
-        assertTrue(output.contains("admin -> Admin"));
+        assertTrue(output.contains("admin"));
     }
 
     @Test
@@ -680,7 +680,7 @@ public class CommandParserTest {
 
     @Test
     public void testPermissionsCheckUserNotFound() {
-        String input = "fdsfdsd\nREAD\nusers\n";
+        String input = "nonexistent\nREAD\nusers\n";
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
         parser.parseAndExecute("permissions-check", scanner, system);
