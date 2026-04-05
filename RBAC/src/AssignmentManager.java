@@ -1,24 +1,32 @@
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class AssignmentManager implements Repository<RoleAssignment> {
 
-    private final Map<String, RoleAssignment> assignmentsById = new HashMap<>();
+    private final Map<String, RoleAssignment> assignmentsById = new ConcurrentHashMap<>();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     @Override
     public void add(RoleAssignment assignment) {
         if (assignment == null) {
-            throw new IllegalArgumentException("Назначение не может быть  null");
+            throw new IllegalArgumentException("Назначение не может быть null");
         }
 
-        if (assignmentsById.containsKey(assignment.assignmentId())) {
-            throw new IllegalArgumentException("Назначение с id " + assignment.assignmentId() + " уже есть");
-        }
+        lock.writeLock().lock();
+        try {
+            if (assignmentsById.containsKey(assignment.assignmentId())) {
+                throw new IllegalArgumentException("Назначение с id " + assignment.assignmentId() + " уже есть");
+            }
 
-        if (hasActiveAssignment(assignment.user(), assignment.role())) {
-            throw new IllegalArgumentException("У пользователя уже есть активное назначение на эту роль");
-        }
+            if (hasActiveAssignment(assignment.user(), assignment.role())) {
+                throw new IllegalArgumentException("У пользователя уже есть активное назначение на эту роль");
+            }
 
-        assignmentsById.put(assignment.assignmentId(), assignment);
+            assignmentsById.put(assignment.assignmentId(), assignment);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private boolean hasActiveAssignment(User user, Role role) {
@@ -33,64 +41,113 @@ public class AssignmentManager implements Repository<RoleAssignment> {
     @Override
     public boolean remove(RoleAssignment assignment) {
         if (assignment == null) return false;
-        return assignmentsById.remove(assignment.assignmentId()) != null;
+        lock.writeLock().lock();
+        try {
+            return assignmentsById.remove(assignment.assignmentId()) != null;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     @Override
     public Optional<RoleAssignment> findById(String id) {
         if (id == null) return Optional.empty();
-        return Optional.ofNullable(assignmentsById.get(id));
+        lock.readLock().lock();
+        try {
+            return Optional.ofNullable(assignmentsById.get(id));
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
     public List<RoleAssignment> findAll() {
-        return new ArrayList<>(assignmentsById.values());
+        lock.readLock().lock();
+        try {
+            return new ArrayList<>(assignmentsById.values());
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
     public int count() {
-        return assignmentsById.size();
+        lock.readLock().lock();
+        try {
+            return assignmentsById.size();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
     public void clear() {
-        assignmentsById.clear();
+        lock.writeLock().lock();
+        try {
+            assignmentsById.clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public List<RoleAssignment> findByUser(User user) {
         if (user == null) return Collections.emptyList();
-
-        List<RoleAssignment> result = new ArrayList<>();
-        for (RoleAssignment a : assignmentsById.values()) {
-            if (a.user().equals(user)) {
-                result.add(a);
+        lock.readLock().lock();
+        try {
+            List<RoleAssignment> result = new ArrayList<>();
+            for (RoleAssignment a : assignmentsById.values()) {
+                if (a.user().equals(user)) {
+                    result.add(a);
+                }
             }
+            return result;
+        } finally {
+            lock.readLock().unlock();
         }
-        return result;
     }
 
     public List<RoleAssignment> findByRole(Role role) {
         if (role == null) return Collections.emptyList();
-
-        List<RoleAssignment> result = new ArrayList<>();
-        for (RoleAssignment a : assignmentsById.values()) {
-            if (a.role().equals(role)) {
-                result.add(a);
+        lock.readLock().lock();
+        try {
+            List<RoleAssignment> result = new ArrayList<>();
+            for (RoleAssignment a : assignmentsById.values()) {
+                if (a.role().equals(role)) {
+                    result.add(a);
+                }
             }
+            return result;
+        } finally {
+            lock.readLock().unlock();
         }
-        return result;
     }
 
     public List<RoleAssignment> findByFilter(AssignmentFilter filter) {
         if (filter == null) return findAll();
-
-        List<RoleAssignment> result = new ArrayList<>();
-        for (RoleAssignment a : assignmentsById.values()) {
-            if (filter.test(a)) {
-                result.add(a);
+        lock.readLock().lock();
+        try {
+            List<RoleAssignment> result = new ArrayList<>();
+            for (RoleAssignment a : assignmentsById.values()) {
+                if (filter.test(a)) {
+                    result.add(a);
+                }
             }
+            return result;
+        } finally {
+            lock.readLock().unlock();
         }
-        return result;
+    }
+
+    public List<RoleAssignment> findByFilterParallel(AssignmentFilter filter) {
+        if (filter == null) return findAll();
+        lock.readLock().lock();
+        try {
+            return assignmentsById.values().parallelStream()
+                    .filter(filter::test)
+                    .toList();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     public List<RoleAssignment> findAll(AssignmentFilter filter, Comparator<RoleAssignment> sorter) {
@@ -102,39 +159,53 @@ public class AssignmentManager implements Repository<RoleAssignment> {
     }
 
     public List<RoleAssignment> getActiveAssignments() {
-        List<RoleAssignment> result = new ArrayList<>();
-        for (RoleAssignment a : assignmentsById.values()) {
-            if (a.isActive()) {
-                result.add(a);
+        lock.readLock().lock();
+        try {
+            List<RoleAssignment> result = new ArrayList<>();
+            for (RoleAssignment a : assignmentsById.values()) {
+                if (a.isActive()) {
+                    result.add(a);
+                }
             }
+            return result;
+        } finally {
+            lock.readLock().unlock();
         }
-        return result;
     }
 
     public List<RoleAssignment> getExpiredAssignments() {
-        List<RoleAssignment> result = new ArrayList<>();
-        for (RoleAssignment a : assignmentsById.values()) {
-            if (!a.isActive()) {
-                result.add(a);
+        lock.readLock().lock();
+        try {
+            List<RoleAssignment> result = new ArrayList<>();
+            for (RoleAssignment a : assignmentsById.values()) {
+                if (!a.isActive()) {
+                    result.add(a);
+                }
             }
+            return result;
+        } finally {
+            lock.readLock().unlock();
         }
-        return result;
     }
 
     public boolean userHasRole(User user, Role role) {
-        for (RoleAssignment a : assignmentsById.values()) {
-            if (a.user().equals(user) && a.role().equals(role)) {
-                return true;
+        lock.readLock().lock();
+        try {
+            for (RoleAssignment a : assignmentsById.values()) {
+                if (a.user().equals(user) && a.role().equals(role)) {
+                    return true;
+                }
             }
+            return false;
+        } finally {
+            lock.readLock().unlock();
         }
-        return false;
     }
 
     public boolean userHasPermission(User user, String permissionName, String resource) {
         Set<Permission> userPermissions = getUserPermissions(user);
         for (Permission p : userPermissions) {
-            if (p.name().equals(permissionName) &&
-                    p.resource().equals(resource)) {
+            if (p.name().equals(permissionName) && p.resource().equals(resource)) {
                 return true;
             }
         }
@@ -142,42 +213,61 @@ public class AssignmentManager implements Repository<RoleAssignment> {
     }
 
     public Set<Permission> getUserPermissions(User user) {
-        Set<Permission> permissions = new HashSet<>();
-        for (RoleAssignment a : assignmentsById.values()) {
-            if (a.user().equals(user)) {
-                permissions.addAll(a.role().getPermissions());
+        lock.readLock().lock();
+        try {
+            Set<Permission> permissions = new HashSet<>();
+            for (RoleAssignment a : assignmentsById.values()) {
+                if (a.user().equals(user)) {
+                    permissions.addAll(a.role().getPermissions());
+                }
             }
+            return permissions;
+        } finally {
+            lock.readLock().unlock();
         }
-        return permissions;
     }
 
     public void revokeAssignment(String assignmentId) {
-        Optional<RoleAssignment> opt = findById(assignmentId);
-        if (opt.isEmpty()) {
-            throw new IllegalArgumentException("Назначение с id " + assignmentId + " не найдено");
+        lock.writeLock().lock();
+        try {
+            Optional<RoleAssignment> opt = findById(assignmentId);
+            if (opt.isEmpty()) {
+                throw new IllegalArgumentException("Назначение с id " + assignmentId + " не найдено");
+            }
+
+            RoleAssignment assignment = opt.get();
+
+            if (!(assignment instanceof TemporaryAssignment)) {
+                throw new IllegalArgumentException("Только временные назначения могут быть отозваны");
+            }
+
+            ((TemporaryAssignment) assignment).revoke();
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        RoleAssignment assignment = opt.get();
-
-        if (!(assignment instanceof TemporaryAssignment)) {
-            throw new IllegalArgumentException("Только временные назначения могут быть отозваны");
-        }
-
-        ((TemporaryAssignment) assignment).revoke();
     }
 
     public void extendTemporaryAssignment(String assignmentId, String newExpirationDate) {
-        Optional<RoleAssignment> opt = findById(assignmentId);
-        if (opt.isEmpty()) {
-            throw new IllegalArgumentException("Назначение с id " + assignmentId + " не найдено");
+        lock.writeLock().lock();
+        try {
+            Optional<RoleAssignment> opt = findById(assignmentId);
+            if (opt.isEmpty()) {
+                throw new IllegalArgumentException("Назначение с id " + assignmentId + " не найдено");
+            }
+
+            RoleAssignment assignment = opt.get();
+
+            if (!(assignment instanceof TemporaryAssignment)) {
+                throw new IllegalArgumentException("Только временные назначения могут быть продлены");
+            }
+
+            if (!ValidationUtils.isValidDate(newExpirationDate)) {
+                throw new IllegalArgumentException("Ошибка: Неверный формат даты. Ожидается dd.MM.yyyy HH:mm");
+            }
+
+            ((TemporaryAssignment) assignment).extend(newExpirationDate);
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        RoleAssignment assignment = opt.get();
-
-        if (!(assignment instanceof TemporaryAssignment)) {
-            throw new IllegalArgumentException("Только временные назначения могут быть продлены");
-        }
-
-        ((TemporaryAssignment) assignment).extend(newExpirationDate);
     }
 }
