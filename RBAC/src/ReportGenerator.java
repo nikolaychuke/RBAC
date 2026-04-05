@@ -1,4 +1,6 @@
 import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ReportGenerator {
 
@@ -11,7 +13,7 @@ public class ReportGenerator {
             sb.append(String.format("\nПользователь: %s (%s)\n", user.username(), user.fullName()));
             sb.append(String.format("Email: %s\n", user.email()));
 
-            java.util.List<RoleAssignment> assignments = assignmentManager.findByUser(user);
+            List<RoleAssignment> assignments = assignmentManager.findByUser(user);
             sb.append("Роли: ");
 
             if (assignments.isEmpty()) {
@@ -31,13 +33,49 @@ public class ReportGenerator {
         return sb.toString();
     }
 
+    public String generateUserReportParallel(UserManager userManager, AssignmentManager assignmentManager) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("================== ОТЧЁТ ПО ПОЛЬЗОВАТЕЛЯМ (PARALLEL) ==================\n");
+
+        List<User> users = userManager.findAll();
+
+        String result = users.parallelStream()
+                .map(user -> {
+                    StringBuilder userSb = new StringBuilder();
+                    userSb.append(String.format("\nПользователь: %s (%s)\n", user.username(), user.fullName()));
+                    userSb.append(String.format("Email: %s\n", user.email()));
+
+                    List<RoleAssignment> assignments = assignmentManager.findByUser(user);
+                    userSb.append("Роли: ");
+
+                    if (assignments.isEmpty()) {
+                        userSb.append("(нет ролей)");
+                    } else {
+                        for (int i = 0; i < assignments.size(); i++) {
+                            RoleAssignment ra = assignments.get(i);
+                            userSb.append(ra.role().getName());
+                            if (!ra.isActive()) userSb.append(" (неактивна)");
+                            if (i < assignments.size() - 1) userSb.append(", ");
+                        }
+                    }
+                    userSb.append("\n");
+                    return userSb.toString();
+                })
+                .collect(Collectors.joining());
+
+        sb.append(result);
+        sb.append("==================================================");
+        return sb.toString();
+    }
+
     public String generateRoleReport(RoleManager roleManager, AssignmentManager assignmentManager) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("================== ОТЧЁТ ПО РОЛЯМ ==================\n");
 
         for (Role role : roleManager.findAll()) {
-            java.util.List<RoleAssignment> assignments = assignmentManager.findByRole(role);
+            List<RoleAssignment> assignments = assignmentManager.findByRole(role);
             int activeCount = 0;
             for (RoleAssignment ra : assignments) {
                 if (ra.isActive()) activeCount++;
@@ -58,12 +96,12 @@ public class ReportGenerator {
 
         sb.append("================== МАТРИЦА ПРАВ ==================\n");
 
-        java.util.Set<String> allResources = new java.util.HashSet<>();
-        java.util.Map<String, java.util.Set<String>> userPermissions = new java.util.HashMap<>();
+        Set<String> allResources = new HashSet<>();
+        Map<String, Set<String>> userPermissions = new HashMap<>();
 
         for (User user : userManager.findAll()) {
-            java.util.Set<Permission> perms = assignmentManager.getUserPermissions(user);
-            java.util.Set<String> permStrings = new java.util.HashSet<>();
+            Set<Permission> perms = assignmentManager.getUserPermissions(user);
+            Set<String> permStrings = new HashSet<>();
             for (Permission p : perms) {
                 String key = p.name() + ":" + p.resource();
                 permStrings.add(key);
@@ -72,8 +110,8 @@ public class ReportGenerator {
             userPermissions.put(user.username(), permStrings);
         }
 
-        java.util.List<String> sortedResources = new java.util.ArrayList<>(allResources);
-        java.util.Collections.sort(sortedResources);
+        List<String> sortedResources = new ArrayList<>(allResources);
+        Collections.sort(sortedResources);
 
         sb.append(String.format("%-15s", "Пользователь"));
         for (String resource : sortedResources) {
@@ -81,10 +119,62 @@ public class ReportGenerator {
         }
         sb.append("\n-------------------------------------------------\n");
 
-
         for (User user : userManager.findAll()) {
             sb.append(String.format("%-15s", user.username()));
-            java.util.Set<String> perms = userPermissions.get(user.username());
+            Set<String> perms = userPermissions.get(user.username());
+
+            for (String resource : sortedResources) {
+                boolean hasRead = perms != null && perms.contains("READ:" + resource);
+                boolean hasWrite = perms != null && perms.contains("WRITE:" + resource);
+                boolean hasDelete = perms != null && perms.contains("DELETE:" + resource);
+
+                String rights = "";
+                if (hasRead) rights += "R";
+                if (hasWrite) rights += "W";
+                if (hasDelete) rights += "D";
+                if (rights.isEmpty()) rights = "-";
+
+                sb.append(String.format(" | %-10s", rights));
+            }
+            sb.append("\n");
+        }
+
+        sb.append("==================================================");
+        return sb.toString();
+    }
+
+    public String generatePermissionMatrixParallel(UserManager userManager, AssignmentManager assignmentManager) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("================== МАТРИЦА ПРАВ (PARALLEL) ==================\n");
+
+        List<User> users = userManager.findAll();
+
+        Set<String> allResources = users.parallelStream()
+                .flatMap(user -> assignmentManager.getUserPermissions(user).stream())
+                .map(Permission::resource)
+                .collect(Collectors.toSet());
+
+        Map<String, Set<String>> userPermissions = users.parallelStream()
+                .collect(Collectors.toConcurrentMap(
+                        User::username,
+                        user -> assignmentManager.getUserPermissions(user).stream()
+                                .map(p -> p.name() + ":" + p.resource())
+                                .collect(Collectors.toSet())
+                ));
+
+        List<String> sortedResources = new ArrayList<>(allResources);
+        Collections.sort(sortedResources);
+
+        sb.append(String.format("%-15s", "Пользователь"));
+        for (String resource : sortedResources) {
+            sb.append(String.format(" | %-10s", resource));
+        }
+        sb.append("\n-------------------------------------------------\n");
+
+        for (User user : users) {
+            sb.append(String.format("%-15s", user.username()));
+            Set<String> perms = userPermissions.get(user.username());
 
             for (String resource : sortedResources) {
                 boolean hasRead = perms != null && perms.contains("READ:" + resource);
