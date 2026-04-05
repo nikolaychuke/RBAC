@@ -6,6 +6,7 @@ public class RBACSystem {
     private RoleManager roleManager;
     private AssignmentManager assignmentManager;
     private AuditLog auditLog;
+    private ReportGenerator reportGenerator;
     private String currentUser;
 
     public RBACSystem() {
@@ -13,8 +14,11 @@ public class RBACSystem {
         this.roleManager = new RoleManager();
         this.assignmentManager = new AssignmentManager();
         this.auditLog = new AuditLog();
+        this.reportGenerator = new ReportGenerator();
         this.currentUser = "system";
     }
+
+    public ReportGenerator getReportGenerator() { return reportGenerator; }
 
     public UserManager getUserManager() {
         return userManager;
@@ -64,6 +68,7 @@ public class RBACSystem {
         managerRole.addPermission(writeUsers);
         managerRole.addPermission(readReports);
         managerRole.addPermission(writeReports);
+        managerRole.addPermission(readSettings);
         roleManager.add(managerRole);
 
         Role viewerRole = new Role("Viewer", "Только просмотр");
@@ -75,9 +80,34 @@ public class RBACSystem {
         User admin = User.create("admin", "Administrator", "admin@test.com");
         userManager.add(admin);
 
+        User manager1 = User.create("manager1", "Мanager", "manager1@test.com");
+        userManager.add(manager1);
+
+        User manager2 = User.create("manager2", "Manager2", "manager2@test.com");
+        userManager.add(manager2);
+
+        User viewer1 = User.create("viewer1", "Viewer", "viewer1@test.com");
+        userManager.add(viewer1);
+
+        User viewer2 = User.create("viewer2", "Viewer2", "viewer2@test.com");
+        userManager.add(viewer2);
+
         AssignmentMetadata metadata = AssignmentMetadata.now(currentUser, "Инициализация");
-        RoleAssignment assignment = new PermanentAssignment(admin, adminRole, metadata);
-        assignmentManager.add(assignment);
+
+        RoleAssignment adminAssignment = new PermanentAssignment(admin, adminRole, metadata);
+        assignmentManager.add(adminAssignment);
+
+        RoleAssignment manager1Assignment = new PermanentAssignment(manager1, managerRole, metadata);
+        assignmentManager.add(manager1Assignment);
+
+        RoleAssignment manager2Assignment = new PermanentAssignment(manager2, managerRole, metadata);
+        assignmentManager.add(manager2Assignment);
+
+        RoleAssignment viewer1Assignment = new PermanentAssignment(viewer1, viewerRole, metadata);
+        assignmentManager.add(viewer1Assignment);
+
+        RoleAssignment viewer2Assignment = new PermanentAssignment(viewer2, viewerRole, metadata);
+        assignmentManager.add(viewer2Assignment);
     }
 
     public String generateStatistics() {

@@ -548,7 +548,7 @@ public class CommandRegistry {
                             system.getAuditLog().log("ASSIGN_ROLE", system.getCurrentUser(), username, "Роль: " + role.getName() + ", Тип: постоянное");
                             System.out.println("Постоянное назначение создано");
                         } else if (typeChoice.equals("2")) {
-                            System.out.print("Дата истечения (формат: yyyy-MM-dd HH:mm): ");
+                            System.out.print("Дата истечения (формат: dd.MM.yyyy HH:mm): ");
                             String expiresAt = scanner.nextLine().trim();
                             System.out.print("Автообновление? (да/нет): ");
                             boolean autoRenew = scanner.nextLine().trim().equalsIgnoreCase("да");
@@ -780,7 +780,7 @@ public class CommandRegistry {
                     try {
                         int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
                         if (index >= 0 && index < tempAssignments.size()) {
-                            System.out.print("Введите новую дату истечения (yyyy-MM-dd HH:mm): ");
+                            System.out.print("Введите новую дату истечения (dd.MM.yyyy HH:mm): ");
                             String newDate = scanner.nextLine().trim();
                             tempAssignments.get(index).extend(newDate);
                             System.out.println("Назначение продлено");
@@ -975,6 +975,57 @@ public class CommandRegistry {
                         System.out.print("Имя файла: ");
                         String filename = scanner.nextLine().trim();
                         system.getAuditLog().saveToFile(filename);
+                    }
+                });
+
+        parser.registerCommand("report-users", "Сформировать отчёт по пользователям",
+                (scanner, system) -> {
+                    String report = system.getReportGenerator().generateUserReport(
+                            system.getUserManager(),
+                            system.getAssignmentManager()
+                    );
+                    System.out.println(report);
+
+                    System.out.print("\nСохранить отчёт в файл? (да/нет): ");
+                    String save = scanner.nextLine().trim();
+                    if (save.equalsIgnoreCase("да")) {
+                        System.out.print("Введите имя файла: ");
+                        String filename = scanner.nextLine().trim();
+                        system.getReportGenerator().exportToFile(report, filename);
+                    }
+                });
+
+        parser.registerCommand("report-roles", "Сформировать отчёт по ролям",
+                (scanner, system) -> {
+                    String report = system.getReportGenerator().generateRoleReport(
+                            system.getRoleManager(),
+                            system.getAssignmentManager()
+                    );
+                    System.out.println(report);
+
+                    System.out.print("\nСохранить отчёт в файл? (да/нет): ");
+                    String save = scanner.nextLine().trim();
+                    if (save.equalsIgnoreCase("да")) {
+                        System.out.print("Введите имя файла: ");
+                        String filename = scanner.nextLine().trim();
+                        system.getReportGenerator().exportToFile(report, filename);
+                    }
+                });
+
+        parser.registerCommand("report-matrix", "Сформировать матрицу прав",
+                (scanner, system) -> {
+                    String report = system.getReportGenerator().generatePermissionMatrix(
+                            system.getUserManager(),
+                            system.getAssignmentManager()
+                    );
+                    System.out.println(report);
+
+                    System.out.print("\nСохранить отчёт в файл? (да/нет): ");
+                    String save = scanner.nextLine().trim();
+                    if (save.equalsIgnoreCase("да")) {
+                        System.out.print("Введите имя файла: ");
+                        String filename = scanner.nextLine().trim();
+                        system.getReportGenerator().exportToFile(report, filename);
                     }
                 });
     }
