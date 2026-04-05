@@ -308,13 +308,14 @@ public class CommandParserTest {
 
     @Test
     public void testUserSearchInvalidChoice() {
-        String input = "5\n";
+        String input = "5\n1\nadmin\n";
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
         parser.parseAndExecute("user-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("Неверный выбор"));
+        assertTrue(output.contains("Ошибка: Введите число от 1 до 4"));
+        assertTrue(output.contains("admin"));
     }
 
 
@@ -463,13 +464,14 @@ public class CommandParserTest {
 
     @Test
     public void testRoleSearchInvalidChoice() {
-        String input = "4\n";
+        String input = "4\n1\nAdmin\n";
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
         parser.parseAndExecute("role-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("Неверный выбор"));
+        assertTrue(output.contains("Ошибка: Введите число от 1 до 3"));
+        assertTrue(output.contains("Admin"));
     }
 
     @Test
@@ -595,7 +597,7 @@ public class CommandParserTest {
 
     @Test
     public void testAssignmentSearchByType() {
-        String input = "3\nPERMANENT\n";
+        String input = "3\n1\n";
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
         parser.parseAndExecute("assignment-search", scanner, system);
@@ -617,13 +619,14 @@ public class CommandParserTest {
 
     @Test
     public void testAssignmentSearchInvalidChoice() {
-        String input = "5\n";
+        String input = "5\n1\nadmin\n";
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
         parser.parseAndExecute("assignment-search", scanner, system);
 
         String output = outputStream.toString();
-        assertTrue(output.contains("Неверный выбор"));
+        assertTrue(output.contains("Ошибка: Введите число от 1 до 4"));
+        assertTrue(output.contains("admin -> Admin"));
     }
 
     @Test
@@ -677,7 +680,7 @@ public class CommandParserTest {
 
     @Test
     public void testPermissionsCheckUserNotFound() {
-        String input = "nonexistent\nREAD\nusers\n";
+        String input = "fdsfdsd\nREAD\nusers\n";
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
         parser.parseAndExecute("permissions-check", scanner, system);
