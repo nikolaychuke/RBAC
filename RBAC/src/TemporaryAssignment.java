@@ -60,6 +60,12 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
             long hours = ChronoUnit.HOURS.between(now, expires) % 24;
             long minutes = ChronoUnit.MINUTES.between(now, expires) % 60;
 
+            String datePart = expiresAt.split(" ")[0];
+            String relativeDate = DateUtils.formatRelativeTime(datePart.replace(".", "-"));
+
+            if (days == 0) {
+                return relativeDate + ", " + hours + " ч " + minutes + " мин";
+            }
             return days + " д " + hours + " ч " + minutes + " мин";
         } catch (Exception e) {
             return "Ошибка";
@@ -92,5 +98,4 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     public boolean isRevoked() {
         return revoked;
     }
-
 }
