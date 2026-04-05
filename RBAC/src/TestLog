@@ -1,0 +1,8 @@
+2026-04-05 16:04,CREATE_USER,system,Test,Полное имя: testing, Email: test@mail.ru
+2026-04-05 16:05,CREATE_USER,system,test2,Полное имя: testing2, Email: test2@mail.ru
+2026-04-05 16:05,CREATE_ROLE,system,ROlE1,Описание: roletest
+2026-04-05 16:06,DELETE_USER,system,test2,Удалены все назначения
+2026-04-05 16:07,DELETE_ROLE,system,Viewer,Удалено назначений: 0
+2026-04-05 16:09,ASSIGN_ROLE,system,Test,Роль: ROlE1, Тип: постоянное
+2026-04-05 16:14,ASSIGN_ROLE,system,Test,Роль: Manager, Тип: временное
+2026-04-05 16:15,REVOKE_ROLE,system,Test,Отозвана роль: Manager

@@ -96,6 +96,7 @@ public class CommandRegistry {
 
                         User user = User.create(username, fullName, email);
                         system.getUserManager().add(user);
+                        system.getAuditLog().log("CREATE_USER", system.getCurrentUser(), username, "Полное имя: " + fullName + ", Email: " + email);
                         System.out.println("Пользователь успешно создан: " + user.format());
                     } catch (IllegalArgumentException e) {
                         System.out.println("Ошибка: " + e.getMessage());
@@ -164,6 +165,7 @@ public class CommandRegistry {
 
                     try {
                         system.getUserManager().update(username, fullName, email);
+                        system.getAuditLog().log("UPDATE_USER", system.getCurrentUser(), username, "Новое имя: " + fullName + ", Email: " + email);
                         System.out.println("Пользователь успешно обновлен");
                     } catch (IllegalArgumentException e) {
                         System.out.println("Ошибка: " + e.getMessage());
@@ -195,6 +197,7 @@ public class CommandRegistry {
                         system.getAssignmentManager().remove(ra);
                     }
 
+                    system.getAuditLog().log("DELETE_USER", system.getCurrentUser(), username, "Удалены все назначения");
                     system.getUserManager().remove(user);
                     System.out.println("Пользователь " + username + " удален");
                 });
@@ -275,6 +278,7 @@ public class CommandRegistry {
 
                     Role role = new Role(name, description);
                     system.getRoleManager().add(role);
+                    system.getAuditLog().log("CREATE_ROLE", system.getCurrentUser(), name, "Описание: " + description);
                     System.out.println("Роль создана: " + role.getName());
 
                     boolean adding = true;
@@ -340,6 +344,7 @@ public class CommandRegistry {
                         newRole.addPermission(p);
                     }
                     system.getRoleManager().add(newRole);
+                    system.getAuditLog().log("UPDATE_ROLE", system.getCurrentUser(), oldName, "Новое имя: " + newName + ", Описание: " + newDesc);
                     System.out.println("Роль обновлена");
                 });
 
@@ -375,6 +380,7 @@ public class CommandRegistry {
                     }
 
                     system.getRoleManager().remove(role);
+                    system.getAuditLog().log("DELETE_ROLE", system.getCurrentUser(), roleName, "Удалено назначений: " + assignments.size());
                     System.out.println("Роль " + roleName + " удалена");
                 });
 
@@ -399,6 +405,7 @@ public class CommandRegistry {
                     try {
                         Permission perm = Permission.create(permName, resource, description);
                         optRole.get().addPermission(perm);
+                        system.getAuditLog().log("ADD_PERMISSION", system.getCurrentUser(), roleName, "Право: " + permName + " на ресурс " + resource);
                         System.out.println("Право добавлено к роли " + roleName);
                     } catch (IllegalArgumentException e) {
                         System.out.println("Ошибка: " + e.getMessage());
@@ -434,6 +441,7 @@ public class CommandRegistry {
                         int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
                         if (index >= 0 && index < permList.size()) {
                             role.removePermission(permList.get(index));
+                            system.getAuditLog().log("REMOVE_PERMISSION", system.getCurrentUser(), roleName, "Удалено право: " + permList.get(index).name());
                             System.out.println("Право удалено");
                         } else {
                             System.out.println("Неверный номер");
@@ -537,6 +545,7 @@ public class CommandRegistry {
                         if (typeChoice.equals("1")) {
                             PermanentAssignment assignment = new PermanentAssignment(user, role, metadata);
                             system.getAssignmentManager().add(assignment);
+                            system.getAuditLog().log("ASSIGN_ROLE", system.getCurrentUser(), username, "Роль: " + role.getName() + ", Тип: постоянное");
                             System.out.println("Постоянное назначение создано");
                         } else if (typeChoice.equals("2")) {
                             System.out.print("Дата истечения (формат: yyyy-MM-dd HH:mm): ");
@@ -546,6 +555,7 @@ public class CommandRegistry {
                             TemporaryAssignment assignment = new TemporaryAssignment(user, role,
                                     metadata, expiresAt, autoRenew);
                             system.getAssignmentManager().add(assignment);
+                            system.getAuditLog().log("ASSIGN_ROLE", system.getCurrentUser(), username, "Роль: " + role.getName() + ", Тип: временное");
                             System.out.println("Временное назначение создано");
                         } else {
                             System.out.println("Неверный тип назначения");
@@ -598,9 +608,11 @@ public class CommandRegistry {
                             RoleAssignment assignment = active.get(index);
                             if (assignment instanceof TemporaryAssignment) {
                                 ((TemporaryAssignment) assignment).revoke();
+                                system.getAuditLog().log("REVOKE_ROLE", system.getCurrentUser(), username, "Отозвана роль: " + assignment.role().getName());
                                 System.out.println("Назначение отозвано");
                             } else if (assignment instanceof PermanentAssignment) {
                                 ((PermanentAssignment) assignment).revoke();
+                                system.getAuditLog().log("REVOKE_ROLE", system.getCurrentUser(), username, "Помечено как неактивное: " + assignment.role().getName());
                                 System.out.println("Постоянное назначение помечено как неактивное");
                             }
                         } else {
@@ -951,6 +963,20 @@ public class CommandRegistry {
                         System.out.println("Выход отменен");
                     }
                 });
+
+        parser.registerCommand("audit-log", "Показать лог аудита",
+                (scanner, system) -> {
+                    System.out.println("1 - Показать лог");
+                    System.out.println("2 - Сохранить в файл");
+                    String choice = scanner.nextLine().trim();
+                    if (choice.equals("1")) {
+                        system.getAuditLog().printLog();
+                    } else if (choice.equals("2")) {
+                        System.out.print("Имя файла: ");
+                        String filename = scanner.nextLine().trim();
+                        system.getAuditLog().saveToFile(filename);
+                    }
+                });
     }
 
     private static void printUsersTable(List<User> users) {
@@ -964,4 +990,6 @@ public class CommandRegistry {
                     user.email());
         }
     }
+
+
 }

@@ -4,7 +4,7 @@ import java.time.format.DateTimeFormatter;
 public record AssignmentMetadata(String assignedBy, String assignedAt, String reason) {
 
     private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public static AssignmentMetadata now(String assignedBy, String reason) {
         String assignedAt = LocalDateTime.now().format(FORMATTER);

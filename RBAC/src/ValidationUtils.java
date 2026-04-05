@@ -6,7 +6,7 @@ import java.time.format.DateTimeParseException;
 public final class ValidationUtils {
 
     private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public static boolean isValidUsername(String username) {
         if (username == null) return false;

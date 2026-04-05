@@ -558,15 +558,15 @@ public class CommandParserTest {
         Role viewer = system.getRoleManager().findByName("Viewer").get();
         AssignmentMetadata metadata = AssignmentMetadata.now("system", "Test");
         TemporaryAssignment temp = new TemporaryAssignment(admin, viewer, metadata,
-                "2026-12-31 23:59", false);
+                "31.12.2026 23:59", false);
         system.getAssignmentManager().add(temp);
 
-        String input = "admin\n1\n2027-12-31 23:59\n";
+        String input = "admin\n1\n31.12.2027 23:59\n";
         Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
         parser.parseAndExecute("assignment-extend", scanner, system);
 
-        assertEquals("2027-12-31 23:59", temp.getExpiresAt());
+        assertEquals("31.12.2027 23:59", temp.getExpiresAt());
         String output = outputStream.toString();
         assertTrue(output.contains("Назначение продлено"));
     }

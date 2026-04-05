@@ -9,14 +9,14 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     private boolean revoked;
 
     private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public TemporaryAssignment(User user, Role role, AssignmentMetadata metadata, String expiresAt, boolean autoRenew) {
         super(user, role, metadata);
 
         ValidationUtils.requireNonEmpty(expiresAt, "expiresAt");
         if (!ValidationUtils.isValidDate(expiresAt)) {
-            throw new IllegalArgumentException("Ошибка: Неверный формат даты. Ожидается yyyy-MM-dd HH:mm");
+            throw new IllegalArgumentException("Ошибка: Неверный формат даты. Ожидается dd.MM.yyyy HH:mm");
         }
 
         this.expiresAt = expiresAt;
@@ -83,7 +83,7 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     public void extend(String newExpirationDate) {
         ValidationUtils.requireNonEmpty(newExpirationDate, "newExpirationDate");
         if (!ValidationUtils.isValidDate(newExpirationDate)) {
-            throw new IllegalArgumentException("Ошибка: Неверный формат даты. Ожидается yyyy-MM-dd HH:mm");
+            throw new IllegalArgumentException("Ошибка: Неверный формат даты. Ожидается dd.MM.yyyy HH:mm");
         }
 
         this.expiresAt = newExpirationDate;

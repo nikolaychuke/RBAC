@@ -52,18 +52,17 @@ public class ValidationUtilsTest {
 
     @Test
     public void testIsValidDate() {
-        assertTrue(ValidationUtils.isValidDate("2026-04-04 15:00"));
-        assertTrue(ValidationUtils.isValidDate("2026-01-01 00:00"));
-        assertTrue(ValidationUtils.isValidDate("2026-03-31 14:30"));
+        assertTrue(ValidationUtils.isValidDate("04.04.2026 15:00"));
+        assertTrue(ValidationUtils.isValidDate("01.01.2026 00:00"));
+        assertTrue(ValidationUtils.isValidDate("31.03.2026 14:30"));
 
-        assertFalse(ValidationUtils.isValidDate("2026-04-04 15:00:00"));
-        assertFalse(ValidationUtils.isValidDate("2026-04-04"));
-        assertFalse(ValidationUtils.isValidDate("04-04-2026 15:00"));
-        assertFalse(ValidationUtils.isValidDate("2026/04/04 15:00"));
-        assertFalse(ValidationUtils.isValidDate("2026-14-04 15:00"));
-        assertFalse(ValidationUtils.isValidDate("2026-04-32 15:00"));
-        assertFalse(ValidationUtils.isValidDate("2026-04-04 25:00"));
-        assertFalse(ValidationUtils.isValidDate("2026-04-04 15:60"));
+        assertFalse(ValidationUtils.isValidDate("04.04.2026 15:00:00"));
+        assertFalse(ValidationUtils.isValidDate("04.04.2026"));
+        assertFalse(ValidationUtils.isValidDate("04/04/2026 15:00"));
+        assertFalse(ValidationUtils.isValidDate("04.14.2026 15:00"));
+        assertFalse(ValidationUtils.isValidDate("32.04.2026 15:00"));
+        assertFalse(ValidationUtils.isValidDate("04.04.2026 25:00"));
+        assertFalse(ValidationUtils.isValidDate("04.04.2026 15:60"));
         assertFalse(ValidationUtils.isValidDate(""));
         assertFalse(ValidationUtils.isValidDate(null));
     }
