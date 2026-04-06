@@ -903,6 +903,35 @@ public class CommandRegistry {
                         system.getReportGenerator().exportToFile(report, filename);
                     }
                 });
+
+        parser.registerCommand("report-users-async", "Запустить генерацию отчёта в фоне",
+                (scanner, system) -> {
+                    System.out.println(FormatUtils.formatBox("Генерация отчёта запущена в фоне..."));
+                    system.getBackgroundExecutor().submit(() -> {
+                        String report = system.getReportGenerator().generateUserReportParallel(
+                                system.getUserManager(),
+                                system.getAssignmentManager()
+                        );
+                        System.out.println("\n" + report);
+                        system.getAuditLog().log("REPORT_USERS_ASYNC", system.getCurrentUser(), "system",
+                                "Отчёт сгенерирован асинхронно");
+                    });
+                });
+
+        parser.registerCommand("save-async", "Сохранить данные в файл в фоне",
+                (scanner, system) -> {
+                    String filename = ConsoleUtils.promptString(scanner, "Введите имя файла: ", true);
+                    String report = system.getReportGenerator().generateUserReport(
+                            system.getUserManager(),
+                            system.getAssignmentManager()
+                    );
+                    System.out.println(FormatUtils.formatBox("Сохранение запущено в фоне..."));
+                    system.getBackgroundExecutor().submit(() -> {
+                        system.getReportGenerator().exportToFile(report, filename);
+                        system.getAuditLog().log("SAVE_ASYNC", system.getCurrentUser(), filename,
+                                "Данные сохранены асинхронно");
+                    });
+                });
     }
 
     private static void printUsersTable(List<User> users) {

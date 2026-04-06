@@ -24,11 +24,14 @@ public class AuditLogTest {
     @AfterEach
     public void tearDown() {
         System.setOut(originalOut);
+        auditLog.shutdown();
     }
 
     @Test
-    public void testLog() {
+    public void testLog() throws InterruptedException {
         auditLog.log("CREATE_USER", "admin", "testuser", "Test User");
+
+        Thread.sleep(100);
 
         List<AuditLog.AuditEntry> entries = auditLog.getAll();
         assertEquals(1, entries.size());
@@ -42,19 +45,23 @@ public class AuditLogTest {
     }
 
     @Test
-    public void testGetAll() {
+    public void testGetAll() throws InterruptedException {
         auditLog.log("CREATE_USER", "admin", "user1", "details1");
         auditLog.log("DELETE_USER", "admin", "user2", "details2");
+
+        Thread.sleep(100);
 
         List<AuditLog.AuditEntry> entries = auditLog.getAll();
         assertEquals(2, entries.size());
     }
 
     @Test
-    public void testGetByPerformer() {
+    public void testGetByPerformer() throws InterruptedException {
         auditLog.log("CREATE_USER", "admin", "user1", "details1");
         auditLog.log("DELETE_ROLE", "manager", "role1", "details2");
         auditLog.log("ASSIGN_ROLE", "admin", "user2", "details3");
+
+        Thread.sleep(100);
 
         List<AuditLog.AuditEntry> adminEntries = auditLog.getByPerformer("admin");
         assertEquals(2, adminEntries.size());
@@ -67,10 +74,12 @@ public class AuditLogTest {
     }
 
     @Test
-    public void testGetByAction() {
+    public void testGetByAction() throws InterruptedException {
         auditLog.log("CREATE_USER", "admin", "user1", "details1");
         auditLog.log("CREATE_USER", "manager", "user2", "details2");
         auditLog.log("DELETE_ROLE", "admin", "role1", "details3");
+
+        Thread.sleep(100);
 
         List<AuditLog.AuditEntry> createEntries = auditLog.getByAction("CREATE_USER");
         assertEquals(2, createEntries.size());
@@ -90,8 +99,9 @@ public class AuditLogTest {
     }
 
     @Test
-    public void testPrintLogWithEntries() {
+    public void testPrintLogWithEntries() throws InterruptedException {
         auditLog.log("CREATE_USER", "admin", "testuser", "Test details");
+        Thread.sleep(100);
         auditLog.printLog();
 
         String output = outputStream.toString();
@@ -101,10 +111,11 @@ public class AuditLogTest {
     }
 
     @Test
-    public void testSaveToFile() throws IOException {
+    public void testSaveToFile() throws IOException, InterruptedException {
         String filename = "test_audit.csv";
 
         auditLog.log("CREATE_USER", "admin", "user1", "details1");
+        Thread.sleep(100);
         auditLog.saveToFile(filename);
 
         assertTrue(Files.exists(Paths.get(filename)));
