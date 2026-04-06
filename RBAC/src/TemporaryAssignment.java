@@ -61,7 +61,7 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
             long minutes = ChronoUnit.MINUTES.between(now, expires) % 60;
 
             String datePart = expiresAt.split(" ")[0];
-            String relativeDate = DateUtils.formatRelativeTime(datePart.replace(".", "-"));
+            String relativeDate = DateUtils.formatRelativeTime(datePart);
 
             if (days == 0) {
                 return relativeDate + ", " + hours + " ч " + minutes + " мин";

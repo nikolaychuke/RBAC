@@ -1,0 +1,22 @@
+================== ОТЧЁТ ПО ПОЛЬЗОВАТЕЛЯМ ==================
+
+Пользователь: viewer2 (Viewer2)
+Email: viewer2@test.com
+Роли: Viewer
+
+Пользователь: admin (Administrator)
+Email: admin@test.com
+Роли: Admin
+
+Пользователь: manager1 (Мanager)
+Email: manager1@test.com
+Роли: Manager
+
+Пользователь: viewer1 (Viewer)
+Email: viewer1@test.com
+Роли: Viewer
+
+Пользователь: manager2 (Manager2)
+Email: manager2@test.com
+Роли: Manager
+==================================================

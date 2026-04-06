@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.concurrent.*;
 
 public class RBACSystem {
 
@@ -8,6 +9,7 @@ public class RBACSystem {
     private AuditLog auditLog;
     private ReportGenerator reportGenerator;
     private BackgroundExecutor backgroundExecutor;
+    private ScheduledExecutorService scheduler;
     private String currentUser;
 
     public RBACSystem() {
@@ -17,35 +19,78 @@ public class RBACSystem {
         this.auditLog = new AuditLog();
         this.reportGenerator = new ReportGenerator();
         this.backgroundExecutor = new BackgroundExecutor();
+        this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.currentUser = "system";
+
+        startExpiredAssignmentsChecker();
+        startStatisticsLogger();
     }
 
-    public BackgroundExecutor getBackgroundExecutor() { return backgroundExecutor; }
+    private void startExpiredAssignmentsChecker() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                List<RoleAssignment> assignments = assignmentManager.findAll();
+                int expiredCount = 0;
 
-    public void shutdown() { backgroundExecutor.shutdown(); }
+                for (RoleAssignment ra : assignments) {
+                    if (ra instanceof TemporaryAssignment && ra.isActive()) {
+                        TemporaryAssignment temp = (TemporaryAssignment) ra;
+                        if (temp.isExpired()) {
+                            temp.revoke();
+                            expiredCount++;
+                        }
+                    }
+                }
 
-    public ReportGenerator getReportGenerator() { return reportGenerator; }
-
-    public UserManager getUserManager() {
-        return userManager;
+                if (expiredCount > 0) {
+                    auditLog.log("CLEANUP_EXPIRED", "system", "temporary_assignments",
+                            "Помечено неактивными: " + expiredCount);
+                }
+            } catch (Exception e) {
+                System.err.println("Ошибка при проверке истекших назначений: " + e.getMessage());
+            }
+        }, 10, 30, TimeUnit.SECONDS);
     }
 
-    public RoleManager getRoleManager() {
-        return roleManager;
+    private void startStatisticsLogger() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                String stats = generateStatistics();
+                auditLog.log("STATISTICS_REPORT", "system", "system", stats);
+            } catch (Exception e) {
+                System.err.println("Ошибка при логировании статистики: " + e.getMessage());
+            }
+        }, 60, 60, TimeUnit.SECONDS);
     }
 
-    public AssignmentManager getAssignmentManager() {
-        return assignmentManager;
-    }
+    public BackgroundExecutor getBackgroundExecutor() {return backgroundExecutor;}
 
-    public AuditLog getAuditLog() { return auditLog; }
+    public ReportGenerator getReportGenerator() {return reportGenerator;}
 
-    public void setCurrentUser(String username) {
-        this.currentUser = username;
-    }
+    public UserManager getUserManager() {return userManager;}
 
-    public String getCurrentUser() {
-        return currentUser;
+    public RoleManager getRoleManager() {return roleManager;}
+
+    public AssignmentManager getAssignmentManager() {return assignmentManager;}
+
+    public AuditLog getAuditLog() {return auditLog;}
+
+    public void setCurrentUser(String username) {this.currentUser = username;}
+
+    public String getCurrentUser() {return currentUser;}
+
+    public void shutdown() {
+        backgroundExecutor.shutdown();
+        scheduler.shutdown();
+        try {
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            scheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        auditLog.shutdown();
     }
 
     public void initialize() {
