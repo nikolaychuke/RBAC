@@ -1,0 +1,50 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Compile main code
+        run: |
+          cd RBAC/src/maining
+          javac *.java
+  
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Download JUnit
+        run: |
+          cd RBAC
+          wget -O junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.2/junit-platform-console-standalone-1.10.2.jar
+      
+      - name: Compile main code to out
+        run: |
+          cd RBAC/src/maining
+          javac -d ../../out *.java
+      
+      - name: Compile test
+        run: |
+          cd RBAC
+          javac -cp "junit-platform-console-standalone.jar:out" -d out src/test/*.java
+     
+      - name: Run test
+        run: |
+          cd RBAC
+          java -jar junit-platform-console-standalone.jar --class-path out --include-classname '.*Test.*' --scan-class-path
